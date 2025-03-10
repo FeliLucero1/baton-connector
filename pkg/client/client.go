@@ -35,7 +35,7 @@ type APIClient struct {
 // creacion del cliente
 func NewClient(username, password string, httpClient ...*uhttp.BaseHttpClient) *APIClient {
 	var wrapper = &uhttp.BaseHttpClient{}
-	if httpClient != nil && len(httpClient) > 0 {
+	if len(httpClient) > 0 {
 		wrapper = httpClient[0]
 	}
 	return &APIClient{
@@ -112,13 +112,6 @@ func (c *APIClient) basicAuthHeader() string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
-// Structs para los modelos de datos
-type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-}
-
 func (c *APIClient) ListProjects(ctx context.Context) ([]Project, error) {
 	var res []Project
 	queryUrl, err := url.JoinPath(c.baseURL, getProjects)
@@ -171,18 +164,11 @@ func (c *APIClient) ListRoles(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-// Structs para los nuevos modelos
-
-type Project struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	OwnerUser   User   `json:"ownerUser"`
-}
-
-type UserWithRole struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	UserRole string `json:"userRole"`
+func (c *APIClient) SetBaseURL(newBaseURL string) error {
+	parsedURL, err := url.ParseRequestURI(newBaseURL)
+	if err != nil {
+		return fmt.Errorf("invalid base URL: %w", err)
+	}
+	c.baseURL = parsedURL.String()
+	return nil
 }

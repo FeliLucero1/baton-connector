@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/conductorone/baton-debug-zone/pkg/client"
+
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"github.com/stretchr/testify/assert"
-	""your_project/client""
 )
 
 func TestListUsers(t *testing.T) {
@@ -25,8 +26,8 @@ func TestListUsers(t *testing.T) {
 	}))
 	defer server.Close()
 
-	clientInstance := client.NewClient("testuser", "testpass", &uhttp.BaseHttpClient{Client: server.Client()})
-	clientInstance.baseURL = server.URL
+	clientInstance := client.NewClient("testuser", "testpass", uhttp.NewBaseHttpClient(server.Client()))
+	clientInstance.SetBaseURL(server.URL)
 
 	users, err := clientInstance.ListUsers(context.Background())
 	assert.NoError(t, err)
@@ -43,8 +44,8 @@ func TestGetUserByID(t *testing.T) {
 	}))
 	defer server.Close()
 
-	clientInstance := client.NewClient("testuser", "testpass", &uhttp.BaseHttpClient{Client: server.Client()})
-	clientInstance.baseURL = server.URL
+	clientInstance := client.NewClient("testuser", "testpass", uhttp.NewBaseHttpClient(server.Client()))
+	clientInstance.SetBaseURL(server.URL)
 
 	user, err := clientInstance.GetUserByID(context.Background(), 1)
 	assert.NoError(t, err)
