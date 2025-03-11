@@ -91,6 +91,8 @@ func (c *APIClient) doRequest(ctx context.Context, method string, endpointUrl st
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
+	fmt.Println(c.wrapper)
+
 	resp, err := c.wrapper.Do(req)
 	if err != nil {
 		return nil, err

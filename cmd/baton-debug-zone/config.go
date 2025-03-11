@@ -30,6 +30,11 @@ var (
 
 	// No hay relaciones entre los campos en este caso
 	FieldRelationships = []field.SchemaFieldRelationship{}
+
+	cfg = field.Configuration{
+		Fields:      ConfigurationFields,
+		Constraints: FieldRelationships,
+	}
 )
 
 // En trello no hicieron validación de la configuración
