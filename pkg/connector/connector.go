@@ -10,11 +10,13 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 )
 
-type Connector struct{}
+type Connector struct {
+	apiClient *client.APIClient
+}
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
-	apiClient := &client.APIClient{} // Create an instance of APIClient
+	apiClient := client.NewClient("your-username", "your-password") // Create an instance of APIClient
 	return []connectorbuilder.ResourceSyncer{
 		newUserBuilder(apiClient),
 	}
@@ -40,7 +42,13 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 	return nil, nil
 }
 
-// New returns a new instance of the connector.
-func New(ctx context.Context) (*Connector, error) {
-	return &Connector{}, nil
+// New crea una nueva instancia del conector con autenticación
+func New(ctx context.Context, apiBaseURL, username, password string) (*Connector, error) {
+	apiClient := client.NewClient(username, password)
+	err := apiClient.SetBaseURL(apiBaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Connector{apiClient: apiClient}, nil
 }

@@ -62,7 +62,7 @@ func (c *APIClient) ListUsers(ctx context.Context) ([]User, error) {
 }
 
 func (c *APIClient) GetUserByID(ctx context.Context, id int) (*User, error) {
-	queryUrl := fmt.Sprintf(c.baseURL+getUserByID, id)
+	queryUrl := fmt.Sprintf("%s%s", c.baseURL, fmt.Sprintf(getUserByID, id))
 	var res *User
 	err := c.getResourcesFromAPI(ctx, queryUrl, &res)
 	if err != nil {
