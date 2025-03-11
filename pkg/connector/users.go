@@ -6,30 +6,87 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
+	"github.com/conductorone/baton-sdk/pkg/types/resource"
+
+	"github.com/conductorone/baton-debug-zone/pkg/client"
 )
 
-type userBuilder struct{}
+type userBuilder struct {
+	resourceType *v2.ResourceType
+	client       *client.APIClient
+}
 
-func (o *userBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
+func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 	return userResourceType
 }
 
-// List returns all the users from the database as resource objects.
-// Users include a UserTrait because they are the 'shape' of a standard user.
-func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+// List obtiene todos los usuarios desde la API y los transforma en recursos.
+func (o *userBuilder) List(ctx context.Context, _ *v2.ResourceId, _ *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+	var resources []*v2.Resource
+
+	users, err := o.client.ListUsers(ctx)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	for _, user := range users {
+		userCopy := user
+		userResource, err := parseIntoUserResource(ctx, &userCopy, nil)
+		if err != nil {
+			return nil, "", nil, err
+		}
+		resources = append(resources, userResource)
+	}
+
+	return resources, "", nil, nil
+}
+
+// Transforma un usuario en un recurso compatible con el conector.
+func parseIntoUserResource(_ context.Context, user *client.User, parentResourceID *v2.ResourceId) (*v2.Resource, error) {
+	userStatus := v2.UserTrait_Status_STATUS_ENABLED
+
+	profile := map[string]interface{}{
+		"user_id":  user.ID,
+		"username": user.Username,
+		"email":    user.Email,
+	}
+
+	userTraits := []resource.UserTraitOption{
+		resource.WithUserProfile(profile),
+		resource.WithStatus(userStatus),
+		resource.WithUserLogin(user.Username),
+	}
+
+	displayName := user.Username
+
+	ret, err := resource.NewUserResource(
+		displayName,
+		userResourceType,
+		user.ID,
+		userTraits,
+		resource.WithParentResourceID(parentResourceID),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+// No hay permisos asignados a usuarios en este caso.
+func (o *userBuilder) Entitlements(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
 	return nil, "", nil, nil
 }
 
-// Entitlements always returns an empty slice for users.
-func (o *userBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+// No hay grants específicos para usuarios en este caso.
+func (o *userBuilder) Grants(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
 	return nil, "", nil, nil
 }
 
-// Grants always returns an empty slice for users since they don't have any entitlements.
-func (o *userBuilder) Grants(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	return nil, "", nil, nil
-}
-
-func newUserBuilder() *userBuilder {
-	return &userBuilder{}
+// Constructor para userBuilder.
+func newUserBuilder(c *client.APIClient) *userBuilder {
+	return &userBuilder{
+		resourceType: userResourceType,
+		client:       c,
+	}
 }

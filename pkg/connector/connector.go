@@ -6,6 +6,7 @@ import (
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
+	"github.com/conductorone/baton-sdk/pkg/client"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 )
 
@@ -13,8 +14,9 @@ type Connector struct{}
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
+	apiClient := &client.APIClient{} // Create an instance of APIClient
 	return []connectorbuilder.ResourceSyncer{
-		newUserBuilder(),
+		newUserBuilder(apiClient),
 	}
 }
 
